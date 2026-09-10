@@ -1,11 +1,22 @@
+# Task specification
+Program pro automatické vytváření dvojrozměrných bludišť. Zadávají se parametry, např. výška & šířka, relativní množství křižovatek, relativní množství alternativních cest k cíli apod
+
 # Maze Generator and Tester
 
 # User's documentation
 To run program, fist navigate to folder of program.
 
 ## Before running program
+First clone this repository.
+git clone [HTTPS]
+
+In case Haskell is not installed, please install.
+Fedora: sudo dnf install ghc cabal-install
+Others are harder, pleas find the website with command.
+
 In case random is not installed, run this command in terminal while in the same directory:
 ```
+cabal update
 cabal install --lib containers random
 ```
 
@@ -26,7 +37,7 @@ Because crossroads are created by alghorithm itself and then added with user's p
 
 Algorithm basicly runs DFS which creates a tree, but for each neighbor which we came from we decide, if there shouldn't be another edge, creating another crossroad and in the end another loop.
 
-Each part has ac omment to it, except for Main.hs, I hope it is intuitive.
+Each part has a comment to it, except for Main.hs, I hope it is intuitive.
 
 ## Architecture & Logic
 
