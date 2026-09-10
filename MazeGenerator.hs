@@ -51,7 +51,7 @@ processNeighbors cfg currentCell (x:rest) state =
             -- once generated numbers is less then chance of crossroad, carve one
             -- from currentCell to visited one
             -- if not, same call without that neighbor
-            if (chance <= loops cfg) && ((lengthModificator cfg == 0 && null rest) || lengthModificator cfg /= 0) then
+            if (chance <= loops cfg) && ((not (long cfg) && null rest) || long cfg) then
                 let stateWithLoop = carveWall currentCell x stateWithSeed
                 in processNeighbors cfg currentCell rest stateWithLoop
             else

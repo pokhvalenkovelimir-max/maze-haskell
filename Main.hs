@@ -13,12 +13,16 @@ main :: IO ()
 main = do
     -- on input three values, width, height, percent are expected separated with spaces
     input <- getLine
-    let [w, h, l, lengthModificator] = map read (words input) :: [Int]
+    let [wStr, hStr, lStr, longStr] = words input
+        w    = read wStr :: Int
+        h    = read hStr :: Int
+        l    = read lStr :: Int
+        long = read longStr :: Bool
     initialSeed <- newStdGen
 
     let 
-        cfg = Config w h l lengthModificator
-        emptyState = MazeState Set.empty Set.empty initialSeed
+        cfg = Config w h l long
+        emptyState = MazeState { visited = Set.empty, carvedPaths = Set.empty, randomSeed = initialSeed }
         finalState = dfs cfg (0, 0) emptyState
         (pathStartFinish, steps) = findPath cfg finalState
 

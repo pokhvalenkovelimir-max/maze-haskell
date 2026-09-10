@@ -28,7 +28,7 @@ bfs :: Set.Set (Cell, Cell) -> Cell -> [Path] -> Set.Set Cell -> Path
 bfs _ _ [] _ = []
 -- take fist element from known paths, find other ways, store all of them
 bfs validEdges finish (currentPath@(currentCell:_):restQueue) visited
-    -- once we have our way tp finish, return it
+    -- once we have our way to finish, return it
     | currentCell == finish = reverse currentPath
     -- otherwise continue bfs
     | otherwise =
