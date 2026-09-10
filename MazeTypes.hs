@@ -8,6 +8,7 @@ data Config = Config
   { width  :: Int
   , height :: Int
   , loops :: Int
+  , lengthModificator :: Int
   }
 
 -- coordinates of one cell

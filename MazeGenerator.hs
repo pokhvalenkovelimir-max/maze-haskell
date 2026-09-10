@@ -41,17 +41,17 @@ processNeighbors cfg currentCell [] state = state
 
 -- there is at least one neighbor to look at, process it
 processNeighbors cfg currentCell (x:rest) state = 
-    -- each time we call dfs, we still include visited cell, but only once
-    -- it is a perfect chance to decide if we shouldn't add a crossroad, which
-    -- eventually will create a loop, once there are two
+    -- because we always choose one cell and propagate, it will
+    -- eventually get to processed neighbor
+    -- and create a loop, once there are two
     if Set.member x (visited state) then
         let (chance, nextSeed) = randomR (1, 100 :: Int) (randomSeed state)
             stateWithSeed = state { randomSeed = nextSeed }
         in 
             -- once generated numbers is less then chance of crossroad, carve one
-            -- from currentCell to previous one (visited)
+            -- from currentCell to visited one
             -- if not, same call without that neighbor
-            if chance <= loops cfg then
+            if (chance <= loops cfg) && ((lengthModificator cfg == 0 && null rest) || lengthModificator cfg /= 0) then
                 let stateWithLoop = carveWall currentCell x stateWithSeed
                 in processNeighbors cfg currentCell rest stateWithLoop
             else
@@ -87,7 +87,7 @@ carveWall x y state = state { carvedPaths = newPaths }
 -- within array's boundaries, define neighbors on top, right, bottom, left
 getValidNeighbors :: Config -> Cell -> [Cell]
 getValidNeighbors cfg (x, y) =
-    [ (nx, ny) |  (nx, ny) <- [(x, y-1), (x+1, y), (x, y+1), (x-1, y)], isValid cfg (nx, ny)]
+    [ (nx, ny) | (nx, ny) <- [(x, y-1), (x+1, y), (x, y+1), (x-1, y)], isValid cfg (nx, ny)]
 
 isValid :: Config -> Cell -> Bool
 isValid cfg (x, y) = x >= 0 && x < width cfg && y >= 0 && y < height cfg
