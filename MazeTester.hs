@@ -17,17 +17,17 @@ findPath cfg state =
         startQueue = [[startCell]]
         visited = Set.singleton startCell
         validEdges = carvedPaths state
-        finalPath = bfs validEdges targetCell startQueue visited
+        finalPath = bfsPathFinder validEdges targetCell startQueue visited
     in (finalPath, length finalPath)
 
 -- Edges to choose from, finish, current queue conatining all paths so far, already visited cells
 -- returns shortest path
-bfs :: Set.Set (Cell, Cell) -> Cell -> [Path] -> Set.Set Cell -> Path
+bfsPathFinder :: Set.Set (Cell, Cell) -> Cell -> [Path] -> Set.Set Cell -> Path
 -- if we have nothing in paths, none to process, then no way exists, that doesn't happen
 -- in case of a tree, one shall always be
-bfs _ _ [] _ = []
+bfsPathFinder _ _ [] _ = []
 -- take fist element from known paths, find other ways, store all of them
-bfs validEdges finish (currentPath@(currentCell:_):restQueue) visited
+bfsPathFinder validEdges finish (currentPath@(currentCell:_):restQueue) visited
     -- once we have our way to finish, return it
     | currentCell == finish = reverse currentPath
     -- otherwise continue bfs
@@ -36,7 +36,7 @@ bfs validEdges finish (currentPath@(currentCell:_):restQueue) visited
             newPaths = [ n : currentPath | n <- neighbors ]
             newVisited = foldr Set.insert visited neighbors
             newQueue = restQueue ++ newPaths
-        in bfs validEdges finish newQueue newVisited
+        in bfsPathFinder validEdges finish newQueue newVisited
 
 -- cell we are at right now, all edges, visited edges
 -- returns cells to visit

@@ -3,6 +3,7 @@ module MazeGenerator where
 import MazeTypes
 import qualified Data.Set as Set
 import System.Random
+import Data.Graph (edges)
 
 -- DFS carves a perfect tree in the graph of size given by user
 dfs :: Config -> Cell -> State -> State
@@ -43,26 +44,47 @@ processNeighbors cfg currentCell [] state = state
 processNeighbors cfg currentCell (x:rest) state = 
     -- because we always choose one cell and propagate, it will
     -- eventually get to processed neighbor
-    -- and create a loop, once there are two
     if Set.member x (visited state) then
-        let (chance, nextSeed) = randomR (1, 100 :: Int) (randomSeed state)
-            stateWithSeed = state { randomSeed = nextSeed }
-        in 
-            -- once generated numbers is less then chance of crossroad, carve one
-            -- from currentCell to visited one
-            -- if not, same call without that neighbor
-            if (chance <= loops cfg) && ((not (long cfg) && null rest) || long cfg) then
-                let stateWithLoop = carveWall currentCell x stateWithSeed
-                in processNeighbors cfg currentCell rest stateWithLoop
-            else
-                processNeighbors cfg currentCell rest stateWithSeed
+        processNeighbors cfg currentCell rest state
     else
-        -- if unvisited, we just break a wall between and make a recursive call
+        -- if unvisited, we break a wall between and make a recursive call
         let
             stateNewEdge  = carveWall currentCell x state
             stateAfterDfs = dfs cfg x stateNewEdge
         in
             processNeighbors cfg currentCell rest stateAfterDfs
+
+bfs :: Config -> State -> [Cell] -> State
+bfs _ state [] = state
+bfs cfg state (currentCell:rest) = 
+    let
+        validNeighbors = getValidNeighbors cfg currentCell
+        unvisited = [ n | n <- validNeighbors, not (Set.member n (visited state)) ]
+    in 
+        if unvisited == [] 
+        then 
+            bfs cfg state rest
+        else 
+            let
+                -- we shuffle all roads, so this is not a normal bfs
+                -- anyway, when doing this we don't build road by road, but
+                -- propagate each road almost evenly
+                -- almost, because further from start there are more new cells
+                -- therefore it acts like building one road and building branches from it
+                (picked:_, newSeed) = shuffle unvisited (randomSeed state)
+                
+                stateNewEdge = carveWall currentCell picked (state { randomSeed = newSeed })
+                stateVisited = stateNewEdge { visited = Set.insert picked (visited stateNewEdge) }
+                
+                -- we keep these cells, because we might propagate once from them, but in case all neighbors
+                -- of one cell are propagated in another direction, it will stay isolated, so we throw out
+                -- cells from queue only in case it has no new neighbors
+                newQueue = picked : currentCell : rest
+                
+                (randomizedQueue, finalSeed) = shuffle newQueue (randomSeed stateVisited)
+                finalState = stateVisited { randomSeed = finalSeed }
+            in 
+                bfs cfg finalState randomizedQueue
 
 -- list to shuffle, current seed, new list and seed
 shuffle :: [Cell] -> StdGen -> ([Cell], StdGen)
@@ -83,6 +105,22 @@ carveWall x y state = state { carvedPaths = newPaths }
     where
         edge = getEdge x y
         newPaths = Set.insert edge (carvedPaths state)
+
+createLoops :: [Edge] -> State -> Config -> State
+createLoops [] state cfg = state
+
+createLoops ((cell1, cell2):edges) state cfg =
+    let (chance, nextSeed) = randomR (1, 100 :: Int) (randomSeed state)
+        stateWithSeed = state { randomSeed = nextSeed }
+    in 
+        -- once generated numbers is less then chance of crossroad, carve one
+        -- from cell1 to cell2
+        -- if not, same call without that neighbor
+        if (chance <= loops cfg) then
+            let stateWithLoop = carveWall cell1 cell2 stateWithSeed
+            in createLoops edges stateWithLoop cfg
+        else
+            createLoops edges stateWithSeed cfg
 
 -- within array's boundaries, define neighbors on top, right, bottom, left
 getValidNeighbors :: Config -> Cell -> [Cell]
